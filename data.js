@@ -58,44 +58,52 @@ window.TALLAH = {
       includes:{ar:["السعر يشمل المساحة فقط","3 م لكل عربة حسب لوحة الأسعار","نموذج العربة: 2×1.5 م","يُمنع الطبخ"],en:["Price covers the space only","3 m per cart per the price board","Cart model: 2×1.5 m","No cooking"]}}
   }
 };
-/* ---------- تخطيط المخطط (مأخوذ من صورة المخطط في eventa.grok.me، إحداثيات تقريبية وليست بمقياس) ---------- */
+/* ---------- تخطيط المخطط ----------
+   مطابق لصورة المخطط الرسمي media/floorplan.jpg (إحداثيات بنظام 1024×484 = مقاس الصورة المصغّر).
+   ---------------------------------------------------------------------------------- */
+window.TALLAH.W=1024; window.TALLAH.H=484;
+// حالات مقروءة من المخطط الرسمي (تفسير بصري — راجع NOTES.md):
+// B17 عليه شعار علامة = محجوز ، A6 و B1 بإطار برتقالي متقطع = محجوز مؤقتًا
+Object.assign(window.TALLAH.STATUS_OVERRIDES,{B17:"reserved",A6:"held",B1:"held"});
 (function(){
   const B=[]; const add=(code,cat,x,y,w,h,extra)=>B.push(Object.assign({code,cat,x,y,w,h},extra||{}));
-  const row=(pfx,from,to,cat,x,y,w,h,gap=1.5)=>{for(let i=from,k=0;i<=to;i++,k++) add(pfx+i,cat,x+k*(w+gap),y,w,h);};
-  // كتلة 1: رعاية 1 + A1–A4 / A13–A16 (ضمن نطاق الرعاية) ثم A5–A12 / A17–A24
-  add("S1","sponsor",415,122,40,76,{label:"رعاية 1",labelEn:"S1"});
-  row("A",1,4,"linked",458,122,39,37); row("A",13,16,"linked",458,160,39,37);
-  row("A",5,12,"yellow",660,122,39,37); row("A",17,24,"yellow",660,160,39,37);
-  // كتلة 2: رعاية 2 + B1–B4 / B13–B16 ثم B5–B12 / B17–B24
-  add("S2","sponsor",415,234,40,76,{label:"رعاية 2",labelEn:"S2"});
-  row("B",1,4,"linked",458,234,39,37); row("B",13,16,"linked",458,272,39,37);
-  row("B",5,12,"red",660,234,39,37); row("B",17,24,"red",660,272,39,37);
-  // كتلة 3: رعاية 3 + A32–A35 / A44–A47 ثم A36–A43 / A48–A55
-  add("S3","sponsor",415,346,40,76,{label:"رعاية 3",labelEn:"S3"});
-  row("A",32,35,"linked",458,346,39,37); row("A",44,47,"linked",458,384,39,37);
-  row("A",36,43,"yellow",660,346,39,37); row("A",48,55,"yellow",660,384,39,37);
+  const row=(pfx,from,to,cat,xs,y,w,h)=>{for(let i=from,k=0;i<=to;i++,k++) add(pfx+i,cat,xs[k],y,w,h);};
+  const L4=[435.5,471.5,507.5,543.5], L8=[614,650,686,722,757.5,793.5,829.5,865.5];
+  const blocks=[["S1","A",[1,4],[13,16],"linked",[5,12],[17,24],"yellow",94],
+                ["S2","B",[1,4],[13,16],"linked",[5,12],[17,24],"red",192],
+                ["S3","A",[32,35],[44,47],"linked",[36,43],[48,55],"yellow",291]];
+  blocks.forEach(([s,p,a1,a2,lc,b1,b2,bc,y],i)=>{
+    add(s,"sponsor",398,y,36,66,{label:"رعاية "+(i+1),labelEn:"S"+(i+1)});
+    row(p,a1[0],a1[1],lc,L4,y,35,32.5); row(p,a2[0],a2[1],lc,L4,y+33.5,35,32.5);
+    row(p,b1[0],b1[1],bc,L8,y,34.5,32.5); row(p,b2[0],b2[1],bc,L8,y+33.5,34.5,32.5);
+  });
   // الصف العلوي والسفلي من الأصفر
-  row("A",25,28,"yellow",685,40,39,37); row("A",29,31,"yellow",915,40,39,37);
-  row("A",56,59,"yellow",685,458,39,37); row("A",60,62,"yellow",915,458,39,37);
+  row("A",25,28,"yellow",[637,672,706.5,741],24,33.5,34);
+  row("A",29,31,"yellow",[845,880,914.5],24,34,34);
+  row("A",56,59,"yellow",[633.5,669,705,741],391,34.5,34);
+  row("A",60,62,"yellow",[840,876.5,913],391,35,34);
   // المقاهي
-  for(let i=1;i<=5;i++) add("CAFE"+i,"cafe",392+(i-1)*35,42,33,34,{label:"مقهى "+i,labelEn:"Café "+i,short:"C"+i});
-  for(let i=6;i<=10;i++) add("CAFE"+i,"cafe",392+(i-6)*35,460,33,34,{label:"مقهى "+i,labelEn:"Café "+i,short:"C"+i});
+  const CX=[377,408.5,440,471.5,503];
+  for(let i=1;i<=5;i++) add("CAFE"+i,"cafe",CX[i-1],24,30,33,{label:"مقهى "+i,labelEn:"Café "+i,short:"C"+i});
+  for(let i=6;i<=10;i++) add("CAFE"+i,"cafe",CX[i-6],391,30,33,{label:"مقهى "+i,labelEn:"Café "+i,short:"C"+i});
   // محطات الأطعمة 1–9
-  for(let i=1;i<=6;i++) add("FS"+i,"station",50+(i-1)*31,42,29,27,{label:"محطة "+i,labelEn:"Station "+i,short:String(i)});
-  for(let i=7;i<=9;i++) add("FS"+i,"station",237,72+(i-7)*29,28,27,{label:"محطة "+i,labelEn:"Station "+i,short:String(i)});
+  [76,103.5,131,158.5,186,213.5].forEach((x,k)=>add("FS"+(k+1),"station",x,24,25,23,{label:"محطة "+(k+1),labelEn:"Station "+(k+1),short:String(k+1)}));
+  [46,70.5,95].forEach((y,k)=>add("FS"+(k+7),"station",238,y,27,22.5,{label:"محطة "+(k+7),labelEn:"Station "+(k+7),short:String(k+7)}));
   // فود ترك 1–7
-  for(let i=1;i<=6;i++) add("FT"+i,"truck",28,84+(i-1)*65,38,56,{label:"فود ترك "+i,labelEn:"Truck "+i,short:String(i)});
-  add("FT7","truck",232,414,34,56,{label:"فود ترك 7",labelEn:"Truck 7",short:"7"});
+  [59,117,175,233,291,349].forEach((y,k)=>add("FT"+(k+1),"truck",56,y,33,51,{label:"فود ترك "+(k+1),labelEn:"Truck "+(k+1),short:String(k+1)}));
+  add("FT7","truck",234,352,31,50,{label:"فود ترك 7",labelEn:"Truck 7",short:"7"});
   // متجر وسوق طَلّة
-  add("STORE","store",1048,122,40,116,{label:"متجر طَلّة",labelEn:"Store",vertical:true});
-  add("MARKET","market",1048,300,40,140,{label:"سوق طَلّة",labelEn:"Market",vertical:true});
+  add("STORE","store",924,97,43,140,{label:"متجر طَلّة",labelEn:"Tallah Store",vertical:true});
+  add("MARKET","market",924,257,43,123,{label:"سوق طَلّة",labelEn:"Tallah Market",vertical:true});
   window.TALLAH.booths=B;
-  // عناصر ثابتة غير قابلة للحجز
   window.TALLAH.fixtures=[
-    {x:205,y:155,w:66,h:236,fill:"#1f6b3b",label:{ar:"صالة أوريا لكبار الشخصيات",en:"Auria VIP Lounge"},vertical:true},
-    {x:280,y:40,w:46,h:110,fill:"#1f6b3b",label:{ar:"شركاء",en:"Partners"},vertical:true},
-    {x:280,y:376,w:46,h:116,fill:"#1f6b3b",label:{ar:"شركاء",en:"Partners"},vertical:true},
-    {x:318,y:214,w:54,h:116,fill:"#1f6b3b",label:{ar:"كليك للسياحة",en:"Click Travel"},vertical:true},
-    {x:92,y:430,w:120,h:70,fill:"#3a2a52",label:{ar:"المدخل",en:"Entrance"}}
+    {x:146,y:121,w:67,h:213,fill:"#8f86a8",op:.55,label:{ar:"درج",en:"Stairs"},vertical:true,small:true},
+    {x:213,y:123,w:57,h:209,fill:"#1f7a3c",label:{ar:"صالة أوريا لكبار الشخصيات · الدور 2",en:"Auria VIP Lounge · 2nd floor"},vertical:true},
+    {x:270,y:150,w:43,h:155,fill:"#8f86a8",op:.55,label:{ar:"",en:""}},
+    {x:314,y:175,w:46,h:100,fill:"#1f7a3c",label:{ar:"كليك للسياحة",en:"Click Travel"},vertical:true},
+    {x:280,y:22,w:40,h:103,fill:"#1f7a3c",label:{ar:"RIA · WYN · شركاء",en:"RIA · WYN · Partners"},vertical:true,small:true},
+    {x:280,y:316,w:40,h:109,fill:"#1f7a3c",label:{ar:"CLICK · جاهز · ماي تيبل",en:"CLICK · Jahez · MyTable"},vertical:true,small:true},
+    {x:113,y:366,w:105,h:79,fill:"#6b6680",label:{ar:"▲ المدخل",en:"▲ ENTRANCE"}}
   ];
+  window.TALLAH.marks=[{x:316,y:162,ar:"← مخرج",en:"← EXIT"},{x:316,y:300,ar:"← مدخل",en:"← ENTRANCE"}];
 })();

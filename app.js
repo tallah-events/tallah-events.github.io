@@ -4,13 +4,13 @@ const T=window.TALLAH, C=T.categories, NS="http://www.w3.org/2000/svg";
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const params=new URLSearchParams(location.search);
 let lang=params.get("lang")==="en"?"en":(localStorage.getItem("tallah-lang")||"ar");
-const state={filter:"all",availOnly:false,sel:null,opt:"a",qty:1,view:"map",form:{}};
+const state={overlay:false,filter:"all",availOnly:false,sel:null,opt:"a",qty:1,view:"map",form:{}};
 
 /* ---------- statuses (placeholder: everything "available" unless overridden) ---------- */
 const DEMO=params.get("demo")==="1";
-const demoStatus={B7:"reserved",B8:"reserved",B17:"held",A9:"reserved",A10:"held",A40:"unavailable",A41:"reserved",S1:"reserved",CAFE3:"reserved"};
+const demoStatus={B7:"reserved",B8:"reserved",B9:"held",A9:"reserved",A10:"held",A40:"unavailable",A41:"reserved",S1:"reserved",CAFE3:"reserved"};
 T.booths.forEach(b=>{
-  b.status = b.cat==="linked" ? "linked" : (T.STATUS_OVERRIDES[b.code] || (DEMO&&demoStatus[b.code]) || "available");
+  b.status = T.STATUS_OVERRIDES[b.code] || (b.cat==="linked" ? "linked" : ((DEMO&&demoStatus[b.code]) || "available"));
 });
 if(DEMO) $("#demoNote").hidden=false;
 // off-map pseudo unit for carts
@@ -60,13 +60,13 @@ function renderChips(){
 }
 
 /* ---------- map ---------- */
-const svg=$("#map");
-const aspect=()=>{const r=svg.getBoundingClientRect();return r.width?r.height/r.width:520/1100;};
-const maxW=()=>1100;
+const svg=$("#map");const W=T.W,H=T.H;
+const aspect=()=>{const r=svg.getBoundingClientRect();return r.width?r.height/r.width:H/W;};
+const maxW=()=>W;
 function homeVB(){const w=maxW();const asp=aspect();
-  if(innerWidth<=700){const mw=Math.min(w,470);return{x:630,y:Math.max(0,260-mw*asp/2),w:mw,h:mw*asp};}
-  return{x:0,y:(520-w*asp)/2,w,h:w*asp};}
-let vb={x:0,y:0,w:1100,h:520};
+  if(innerWidth<=700){const mw=Math.min(w,400);return{x:590,y:Math.max(0,H/2-mw*asp/2),w:mw,h:mw*asp};}
+  return{x:0,y:(H-w*asp)/2,w,h:w*asp};}
+let vb={x:0,y:0,w:W,h:H};
 function setVB(){svg.setAttribute("viewBox",`${vb.x} ${vb.y} ${vb.w} ${vb.h}`);$("#zoomlbl").textContent=Math.round(maxW()/vb.w*100)+"%";}
 function el(n,a){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);return e;}
 function renderMap(){
@@ -77,30 +77,31 @@ function renderMap(){
   <linearGradient id="floor" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b3a86"/><stop offset="1" stop-color="#3e2567"/></linearGradient>
   <filter id="glow"><feGaussianBlur stdDeviation="6"/></filter>`;
   svg.appendChild(defs);
-  // hall floor
-  svg.appendChild(el("rect",{x:4,y:4,width:1092,height:512,rx:18,fill:"url(#floor)",stroke:"rgba(212,180,131,.35)","stroke-width":1.2}));
-  svg.appendChild(el("rect",{x:385,y:24,width:650,height:476,rx:12,fill:"rgba(255,255,255,.035)",stroke:"rgba(255,255,255,.08)"}));
-  // labels
-  const lab=(x,y,txt,o={})=>{const e=el("text",Object.assign({x,y,"text-anchor":"middle",fill:"rgba(255,255,255,.75)","font-size":11,"font-weight":600,"font-family":"Jost, IBM Plex Sans Arabic, sans-serif","letter-spacing":lang==="en"?1.5:0},o));e.textContent=txt;svg.appendChild(e);};
-  lab(142,88,t("محطات الأطعمة","FOOD STATIONS"));
-  lab(92,272,t("فود ترك","FOOD TRUCKS"),{transform:"rotate(-90 92 272)"});
-  lab(745,222,t("← المدخل الداخلي","← HALL ENTRY"),{fill:"rgba(212,180,131,.0)"});
-  // fixtures
-  T.fixtures.forEach(f=>{const g=el("g",{class:"fixture"});g.appendChild(el("rect",{x:f.x,y:f.y,width:f.w,height:f.h,rx:6,fill:f.fill,opacity:.85}));
-    const cx=f.x+f.w/2,cy=f.y+f.h/2;const tx=el("text",{x:cx,y:cy+4,"text-anchor":"middle",transform:f.vertical?`rotate(-90 ${cx} ${cy})`:""});tx.textContent=L(f.label);g.appendChild(tx);svg.appendChild(g);});
+  // outer floor + hall frame (as on the official plan)
+  svg.appendChild(el("rect",{x:2,y:2,width:W-4,height:H-4,rx:16,fill:"url(#floor)",stroke:"rgba(212,180,131,.35)","stroke-width":1.2}));
+  if(state.overlay) svg.appendChild(el("image",{href:"media/floorplan.webp",x:0,y:0,width:W,height:H,opacity:.9,preserveAspectRatio:"none"}));
+  svg.appendChild(el("rect",{x:271,y:12,width:701,height:428,rx:4,fill:state.overlay?"none":"rgba(255,255,255,.04)",stroke:"rgba(255,255,255,.55)","stroke-width":2.2,"stroke-dasharray":"10 3"}));
+  const lab=(x,y,txt,o={})=>{const e=el("text",Object.assign({x,y,"text-anchor":"middle",fill:"rgba(255,255,255,.85)","font-size":11,"font-weight":600,"font-family":"Jost, IBM Plex Sans Arabic, sans-serif","letter-spacing":lang==="en"?1.2:0},o));e.textContent=txt;svg.appendChild(e);return e;};
+  if(!state.overlay){
+    lab(167,66,t("محطات الأطعمة","FOOD STATIONS"),{"font-size":12});
+    lab(107,230,t("فود ترك","FOOD TRUCKS"),{transform:"rotate(90 107 230)","font-size":12});
+    T.marks.forEach(m=>lab(m.x+18,m.y,t(m.ar,m.en),{"font-size":9,"text-anchor":"start"}));
+    T.fixtures.forEach(f=>{const g=el("g",{class:"fixture"});g.appendChild(el("rect",{x:f.x,y:f.y,width:f.w,height:f.h,rx:4,fill:f.fill,opacity:f.op||.9}));
+      const cx=f.x+f.w/2,cy=f.y+f.h/2;const tx=el("text",{x:cx,y:cy+3.5,"text-anchor":"middle","font-size":f.small?8:10,transform:f.vertical?`rotate(90 ${cx} ${cy})`:""});tx.textContent=L(f.label);g.appendChild(tx);svg.appendChild(g);});
+  }
   // booths
   T.booths.forEach(b=>{
     const c=C[b.cat]; const match=(state.filter==="all"||state.filter===b.cat||(state.filter==="sponsor"&&b.cat==="linked")) && (!state.availOnly||bookable(b));
     const g=el("g",{class:`booth st-${b.status} ${b.cat==="linked"?"linked":""} ${match?"":"dim"} ${state.sel===b.code?"sel":""}`,tabindex:match?0:-1,role:"button","data-code":b.code,
       "aria-label":`${dispCode(b)} · ${L(c.name)} · ${statusTxt(b.status)}`});
-    g.appendChild(el("rect",{class:"base",x:b.x,y:b.y,width:b.w,height:b.h,rx:4,fill:c.color,opacity:b.cat==="linked"?.75:1}));
+    g.appendChild(el("rect",{class:"base",x:b.x,y:b.y,width:b.w,height:b.h,rx:3,fill:state.overlay?"rgba(255,255,255,0.001)":c.color,opacity:b.cat==="linked"&&!state.overlay?.75:1}));
     if(b.status==="held") g.appendChild(el("rect",{x:b.x,y:b.y,width:b.w,height:b.h,rx:4,fill:"url(#hHeld)",stroke:"#f0c24b","stroke-width":1.6}));
     if(b.status==="reserved") g.appendChild(el("rect",{x:b.x,y:b.y,width:b.w,height:b.h,rx:4,fill:"url(#hRes)"}));
     const cx=b.x+b.w/2,cy=b.y+b.h/2;
     const label=b.vertical?L({ar:b.label,en:b.labelEn}).toUpperCase():(b.short||b.code);
-    const tx=el("text",{x:cx,y:cy+3.5,"text-anchor":"middle",transform:b.vertical||b.cat==="sponsor"?`rotate(-90 ${cx} ${cy})`:"",style:c.ink&&!["reserved","unavailable"].includes(b.status)?`fill:${c.ink}`:""});
+    const tx=el("text",{x:cx,y:cy+3.5,"text-anchor":"middle",transform:b.vertical||b.cat==="sponsor"?`rotate(90 ${cx} ${cy})`:"",style:c.ink&&!["reserved","unavailable"].includes(b.status)?`fill:${c.ink}`:""});
     tx.textContent=b.cat==="sponsor"?t(b.label,"SPONSOR "+b.code.slice(1)):label; if(b.cat==="cafe")tx.setAttribute("font-size","8.5");
-    g.appendChild(tx);
+    if(!state.overlay) g.appendChild(tx);
     const tip=el("title",{});tip.textContent=`${dispCode(b)} — ${L(c.name)} — ${statusTxt(b.status)}`;g.appendChild(tip);
     g.addEventListener("click",e=>{if(moved)return;select(b.code);});
     g.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();select(b.code);}});
@@ -111,7 +112,7 @@ function renderMap(){
 /* zoom & pan */
 function zoom(f,cx,cy){const nw=Math.min(maxW(),Math.max(160,vb.w/f));const r=nw/vb.w;cx=cx??vb.x+vb.w/2;cy=cy??vb.y+vb.h/2;
   vb.x=cx-(cx-vb.x)*r;vb.y=cy-(cy-vb.y)*r;vb.w=nw;vb.h=nw*aspect();clampVB();setVB();}
-function clampVB(){vb.x=vb.w>=1100?(1100-vb.w)/2:Math.min(Math.max(vb.x,0),1100-vb.w);vb.y=vb.h>=520?(520-vb.h)/2:Math.min(Math.max(vb.y,0),520-vb.h);}
+function clampVB(){vb.x=vb.w>=W?(W-vb.w)/2:Math.min(Math.max(vb.x,0),W-vb.w);vb.y=vb.h>=H?(H-vb.h)/2:Math.min(Math.max(vb.y,0),H-vb.h);}
 function pt(e){const r=svg.getBoundingClientRect();return{x:vb.x+(e.clientX-r.left)/r.width*vb.w,y:vb.y+(e.clientY-r.top)/r.height*vb.h};}
 $("#zIn").onclick=()=>zoom(1.4);$("#zOut").onclick=()=>zoom(1/1.4);$("#zReset").onclick=()=>{vb=homeVB();setVB();};
 $("#zFull").onclick=()=>{const m=$("#mapbox");if(document.fullscreenElement)document.exitFullscreen();else m.requestFullscreen?.();};
@@ -120,7 +121,7 @@ const ptrs=new Map();let moved=false,start=null,pinch0=null;
 svg.addEventListener("pointerdown",e=>{ptrs.set(e.pointerId,e);moved=false;start={x:e.clientX,y:e.clientY,vb:{...vb}};if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch0={d:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY),w:vb.w};}});
 svg.addEventListener("pointermove",e=>{if(!ptrs.has(e.pointerId))return;ptrs.set(e.pointerId,e);
   if(ptrs.size===2&&pinch0){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);const target=pinch0.w*pinch0.d/d;zoom(vb.w/target,...Object.values(pt({clientX:(a.clientX+b.clientX)/2,clientY:(a.clientY+b.clientY)/2})));moved=true;return;}
-  const dx=e.clientX-start.x,dy=e.clientY-start.y;if(Math.abs(dx)+Math.abs(dy)>6&&(vb.w<1099||vb.h<519)){moved=true;svg.classList.add("drag");svg.setPointerCapture(e.pointerId);const r=svg.getBoundingClientRect();vb.x=start.vb.x-dx/r.width*vb.w;vb.y=start.vb.y-dy/r.height*vb.h;clampVB();setVB();}});
+  const dx=e.clientX-start.x,dy=e.clientY-start.y;if(Math.abs(dx)+Math.abs(dy)>6&&(vb.w<W-1||vb.h<H-1)){moved=true;svg.classList.add("drag");svg.setPointerCapture(e.pointerId);const r=svg.getBoundingClientRect();vb.x=start.vb.x-dx/r.width*vb.w;vb.y=start.vb.y-dy/r.height*vb.h;clampVB();setVB();}});
 const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch0=null;svg.classList.remove("drag");setTimeout(()=>moved=false,0);};
 svg.addEventListener("pointerup",up);svg.addEventListener("pointercancel",up);
 svg.addEventListener("dblclick",e=>{const p=pt(e);zoom(1.6,p.x,p.y);});
@@ -211,6 +212,14 @@ function wa(text){return `https://wa.me/${T.phone}?text=${encodeURIComponent(tex
 function waDeck(){const a=$("#waDeck");if(a)a.href=wa(t("مرحبًا، أرغب في استلام ملف الرعاية لطَلّة 2027.","Hello, I'd like to receive the Tallah 2027 sponsorship deck."));}
 $$("[data-select]").forEach(a=>a.addEventListener("click",()=>{state.filter="sponsor";renderChips();setTimeout(()=>select(a.dataset.select,{focus:true}),350);}));
 
+/* ---------- official plan: overlay + lightbox ---------- */
+$("#ovl").onchange=e=>{state.overlay=e.target.checked;renderMap();};
+const lb=$("#planLb");
+function openLb(){lb.hidden=false;document.body.style.overflow="hidden";lb.querySelector(".lb-close").focus();}
+function closeLb(){lb.hidden=true;document.body.style.overflow="";$("#openPlan").focus();}
+$("#openPlan").onclick=openLb;lb.querySelector(".lb-close").onclick=closeLb;
+lb.addEventListener("click",e=>{if(e.target===lb)closeLb();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!lb.hidden)closeLb();});
 /* ---------- init ---------- */
 applyLang();
 vb=homeVB();setVB();

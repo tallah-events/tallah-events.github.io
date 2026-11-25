@@ -97,6 +97,8 @@
     <span><i class="lg-sel"></i><b data-en="Your selection" style="font-weight:400">اختيارك</b></span>
    </div>
    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <button type="button" class="btn btn-ghost sm" id="openPlan" aria-haspopup="dialog"><span aria-hidden="true">🗺</span> <span data-en="Exhibition plan">مخطط المعرض</span></button>
+    <label class="toggle"><input type="checkbox" id="ovl"><span data-en="Official plan layer">طبقة المخطط الرسمي</span></label>
     <label class="toggle"><input type="checkbox" id="availOnly"><span data-en="Available only">المتاح فقط</span></label>
     <div class="seg" role="group" aria-label="طريقة العرض"><button type="button" id="vMap" aria-pressed="true" data-en="Map">المخطط</button><button type="button" id="vList" aria-pressed="false" data-en="List">القائمة</button></div>
    </div>
@@ -109,7 +111,7 @@
       <div class="tools">
        <button type="button" id="zIn" aria-label="تكبير">+</button><button type="button" id="zOut" aria-label="تصغير">−</button><button type="button" id="zReset" aria-label="إعادة الضبط">⟲</button><button type="button" id="zFull" aria-label="ملء الشاشة">⛶</button>
       </div>
-      <svg id="map" viewBox="0 0 1100 520" role="img" aria-label="مخطط قاعة تياترو التفاعلي"></svg>
+      <svg id="map" viewBox="0 0 1024 484" role="img" aria-label="مخطط قاعة تياترو التفاعلي"></svg>
      </div>
      <p class="maphint" data-en="Tap a space for details · pinch or scroll to zoom · drag to pan. Illustrative plan based on the official layout, not to scale.">اضغط مساحة لعرض تفاصيلها · قرّب بإصبعين أو بعجلة الفأرة · اسحب للتحريك. مخطط توضيحي مبني على المخطط الرسمي وليس بمقياس.</p>
     </div>
@@ -229,6 +231,14 @@
 
 <div class="mbar"><a class="btn btn-gold" href="#booths" data-en="Book a booth">احجز جناحك</a><a class="btn btn-ghost" href="#sponsor" data-en="Sponsor">كن راعيًا</a><a class="btn btn-ghost wa" href="https://wa.me/966541102224" target="_blank" rel="noopener" aria-label="واتساب">💬</a></div>
 <div class="toast" id="toast" role="status"></div>
+<div class="lb" id="planLb" role="dialog" aria-modal="true" aria-labelledby="lbTitle" hidden>
+ <div class="lb-box">
+  <div class="lb-head"><h3 id="lbTitle" data-en="Exhibition plan · Teatro Hall">مخطط المعرض · قاعة تياترو</h3>
+   <div style="display:flex;gap:8px"><a class="btn btn-ghost sm" href="media/floorplan.jpg" download="tallah-2027-floorplan.jpg" data-en="Download">تحميل</a><a class="btn btn-ghost sm" href="media/floorplan.jpg" target="_blank" rel="noopener" data-en="Full size ↗">الحجم الكامل ↗</a><button type="button" class="lb-close" aria-label="إغلاق">✕</button></div></div>
+  <div class="lb-img"><picture><source srcset="media/floorplan.webp" type="image/webp"><img src="media/floorplan.jpg" width="1290" height="610" alt="المخطط الرسمي لمعرض طَلّة 2027 في قاعة تياترو: الأجنحة A وB والرعاة والمقاهي ومحطات الأطعمة وفود ترك ومتجر وسوق طَلّة" data-en-alt="Official Tallah 2027 floor plan in Teatro Hall: A and B booths, sponsors, cafés, food stations, food trucks, Tallah Store and Market" loading="lazy"></picture></div>
+  <p class="fine" style="margin:10px 0 0" data-en="Official plan. Statuses on the interactive map are confirmed by the Tallah team.">المخطط الرسمي. حالات التوفر في المخطط التفاعلي يؤكدها فريق طَلّة.</p>
+ </div>
+</div>
 <script src="data.js"></script>
 <script src="app.js"></script>
 </body>
